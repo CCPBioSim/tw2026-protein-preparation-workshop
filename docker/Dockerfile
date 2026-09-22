@@ -20,6 +20,9 @@ RUN conda install -y -c conda-forge -c bioconda \
 RUN pip install --no-cache-dir \
     pdb2pqr==3.7.1
 
+COPY docker/fix-nglview.sh /tmp/fix-nglview.sh
+RUN bash /tmp/fix-nglview.sh
+
 # Get workshop files and move them to jovyan directory.
 COPY --chown=1000:100 . .
 RUN rm -rf INSTALL.txt LICENSE README.md docker .git .github environment.yaml run_notebook.sh
