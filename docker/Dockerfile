@@ -1,0 +1,38 @@
+# Start with BioSim base image.
+ARG BASE_IMAGE=latest@sha256:5eb67b09e3fdf64b3128bd9501e08a0cbb007804b678f2096728d8c1260e6217
+FROM ghcr.io/ccpbiosim/jupyterhub-base:$BASE_IMAGE
+
+LABEL maintainer="James Gebbie-Rayet <james.gebbie@stfc.ac.uk>"
+
+ARG AMBERTOOLS_VER=26.0
+
+# Switch to jovyan user.
+USER $NB_USER
+WORKDIR $HOME
+
+# Install workshop deps 
+RUN conda install -y -c conda-forge -c bioconda \
+    conda-forge::matplotlib=3.11.2 \
+    conda-forge::numpy=2.5.3 \
+    conda-forge::openmm=8.6.1 \
+    conda-forge::scipy=1.18.1 \
+    conda-forge::ambertools=$AMBERTOOLS_VER \
+    bioconda::blast=2.17.0
+RUN pip install git+https://github.com/CharlieLaughton/Alphafix.git
+
+RUN mkdir blastp
+WORKDIR /home/jovyan/blastp
+RUN update_blastdb.pl --decompress swissprot
+WORKDIR /home/jovyan
+
+ENV BLASTP=/home/jovyan/blastp
+
+# Get workshop files and move them to jovyan directory.
+COPY --chown=1000:100 . .
+RUN rm -rf INSTALL.txt LICENSE README.md docker .git .github
+
+# Copy updated lab workspace
+#COPY --chown=1000:100 docker/default-37a8.jupyterlab-workspace /home/jovyan/.jupyter/lab/workspaces/default-37a8.jupyterlab-workspace
+
+# Always finish with non-root user as a precaution.
+USER $NB_USER
